@@ -23,6 +23,12 @@ function App() {
     ]);
   };
 
+  const handleReset = () => {
+    setResults(null);
+    setImagePreview(null);
+    setProcessingState('idle');
+  };
+
   return (
     <div className="app-container">
       <header className="app-header">
@@ -57,7 +63,7 @@ function App() {
         </div>
 
         {processingState === 'complete' && results && (
-          <ResultsView results={results} />
+          <ResultsView results={results} onReset={handleReset} />
         )}
 
         {uploadHistory.length > 0 && (

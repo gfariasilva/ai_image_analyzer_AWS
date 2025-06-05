@@ -69,6 +69,8 @@ const UploadForm = ({
         throw new Error('Upload to S3 failed');
       }
 
+      setProcessingState('processing');
+
       const raw = await fetchWithRetries(imageId);
 
       // Adapta o resultado bruto

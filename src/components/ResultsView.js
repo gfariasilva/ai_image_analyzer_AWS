@@ -1,7 +1,7 @@
 // src/components/ResultsView.js
 import React from 'react';
 
-const ResultsView = ({ results }) => {
+const ResultsView = ({ results, onReset }) => {
   return (
     <div className="results-view">
       <h2>Analysis Results</h2>
@@ -11,7 +11,6 @@ const ResultsView = ({ results }) => {
           <>
             <div className="result-icon">✅</div>
             <h3>Person Detected!</h3>
-            <p>Confidence: {results.confidence}%</p>
           </>
         ) : (
           <>
@@ -39,8 +38,7 @@ const ResultsView = ({ results }) => {
       </div>
       
       <div className="action-buttons">
-        <button className="btn">View Details</button>
-        <button className="btn primary">Analyze Another Image</button>
+        <button className="btn primary" onClick={onReset}>Analyze Another Image</button>
       </div>
     </div>
   );
