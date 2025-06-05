@@ -1,4 +1,3 @@
-// src/components/UploadForm.js
 import React, { useRef, useState } from 'react';
 
 const UploadForm = ({ 
@@ -9,8 +8,9 @@ const UploadForm = ({
 }) => {
   const fileInputRef = useRef(null);
   const [error, setError] = useState('');
+  const API_BASE = 'https://rbvablkfn4.execute-api.us-east-1.amazonaws.com';
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -32,43 +32,84 @@ const UploadForm = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target.result);
-      simulateUploadProcess(file);
+      processImageUpload(file);
     };
     reader.readAsDataURL(file);
   };
 
-  const simulateUploadProcess = async (file) => {
+  const processImageUpload = async (file) => {
     try {
-      // In real app: Get presigned URL from your backend
+      // 1. Get presigned URL for upload
       setProcessingState('uploading');
+      // Substitui o GET por um POST com o tipo correto
+      const presignedResponse = await fetch(`${API_BASE}/presigned-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ contentType: file.type })  // tipo real: "image/jpeg"
+      });
+
+      if (!presignedResponse.ok) {
+        throw new Error('Failed to get upload URL');
+      }
       
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In real app: Upload to S3 using presigned URL
-      setProcessingState('processing');
-      
-      // Simulate Rekognition processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Simulated response - Replace with actual API call
-      const mockResponse = {
-        imageId: `img-${Date.now()}`,
-        hasPerson: Math.random() > 0.3,
-        confidence: (Math.random() * 40 + 60).toFixed(1),
-        labels: ['Person', 'Outdoor', 'Nature', 'Tree', 'Sky'],
-        metadata: {
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified
+      const { url, imageId } = await presignedResponse.json();
+
+      // 2. Upload directly to S3
+      const uploadResponse = await fetch(url, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type
         }
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Upload to S3 failed');
+      }
+
+      const raw = await fetchWithRetries(imageId);
+
+      // Adapta o resultado bruto
+      const result = {
+        imageId: raw.imageId,
+        hasPerson: raw.has_person, // renomeia para camelCase
+        labels: raw.labels,
+        metadata: {
+          type: raw.type,
+          size: 0 // você pode tentar estimar ou ignorar por enquanto
+        },
+        confidence: 0 // placeholder caso você ainda não tenha esse valor
       };
-      
-      onProcessingComplete(mockResponse);
+
+      onProcessingComplete(result);
+
     } catch (err) {
-      setError('Processing failed. Please try again.');
+      console.error('Upload failed:', err);
+      setError(err.message || 'Processing failed. Please try again.');
       setProcessingState('idle');
     }
+  };
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const fetchWithRetries = async (imageId, retries = 5, delay = 2000) => {
+    for (let i = 0; i < retries; i++) {
+      const res = await fetch(`${API_BASE}/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success') return data;
+      }
+
+      await wait(delay);
+    }
+    throw new Error('Timed out waiting for processing to complete');
   };
 
   return (
@@ -90,16 +131,22 @@ const UploadForm = ({
         </div>
       ) : (
         <div className="upload-status">
-          {processingState === 'uploading' && (
-            <p>Uploading image to cloud storage...</p>
-          )}
+          {processingState === 'uploading' && <p>Uploading image to S3...</p>}
           {processingState === 'processing' && (
-            <p>Analyzing image with AI...</p>
+            <div className="processing-indicator">
+              <div className="spinner"></div>
+              <p>Processing image...</p>
+            </div>
           )}
         </div>
       )}
       
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="error-message">
+          {error}
+          <button onClick={() => setError('')} className="close-error">×</button>
+        </div>
+      )}
     </div>
   );
 };
