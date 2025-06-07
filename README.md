@@ -1,70 +1,66 @@
-# Getting Started with Create React App
+# 🚀 README - Arquitetura AWS para Processamento de Imagens 🌄
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 🌐 Visão Geral
+Esta arquitetura AWS permite o **upload**, **processamento** e **análise** de imagens utilizando vários serviços da AWS. O sistema detecta automaticamente se uma imagem contém pessoas usando Amazon Rekognition e armazena os resultados.
 
-## Available Scripts
+![diagram](assets/img/architecture_diagram.png)
 
-In the project directory, you can run:
+## 🧩 Componentes da Arquitetura
 
-### `npm start`
+### 🔧 Principais Serviços AWS Utilizados
+1. **🛳️ AWS Fargate** - Hospeda o frontend da aplicação
+2. **🗄️ Amazon S3** - Armazena as imagens enviadas pelos usuários
+3. **⚡ AWS Lambda** - Executa funções serverless para processamento
+4. **👁️ Amazon Rekognition** - Serviço de análise de imagens (detecta pessoas)
+5. **📊 Amazon DynamoDB** - Armazena metadados das imagens
+6. **🐬 Amazon RDS (MySQL)** - Banco de dados para resultados completos
+7. **📨 Amazon SNS** - Serviço de notificações
+8. **🔑 API Gateway** - Gerencia a API da aplicação
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 🛡️ Infraestrutura de Rede
+- **☁️ VPC** - Rede privada virtual
+- **🔒 Subnets Públicas/Privadas** 
+- **⚖️ Application Load Balancer**
+- **🌐 Internet Gateway**
+- **🔥 WAF- Firewall**
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🔄 Fluxo de Processamento
+  
 
-### `npm test`
+1. Usuário faz upload da imagem no front (hospedado no Fargate). Front faz requisição de nova URL para upload da imagem no S3 (API Gateway, Lambda)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. API retorna URL única da nova imagem a ser inserida no S3
 
-### `npm run build`
+3. Front utiliza a URL para salvar a imagem no S3
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+4. S3 dispara um evento pela criação da nova imagem e aciona uma função Lambda
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+5. Lambda processa a imagem no Rekognition e obtém as labels
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+6. Lambda salva resultado do processamento no MySQL RDS e salva metadados da imagem no DynamoDB
 
-### `npm run eject`
+7. Front faz um post com o id da imagem (gerado na primeira etapa) para a API
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+8. API redireciona a requisição para outra função Lambda, com o objetivo de retornar para o front se a imagem processada tem uma pessoa ou não
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+9. Realiza uma consulta no DynamoDB, retornando para o front e redirecionando para página de resultados
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+10. Envia dados do processamento para um tópico do SNS
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 🔒 Considerações de Segurança
+- 🛡️ Secrets Manager para credenciais
+- 🏠 Comunicação interna via VPC
+- 🚫 Acesso restrito ao RDS e funções Lambda que manipulam o DB
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+✨ **Arquitetura serverless escalável para análise de imagens na AWS!** ✨
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Integrantes:**
+1. Gabriel Faria e Silva
+2. Guilherme Canarini Kaneda 
+3. João Pedro Vetorazzo Arantes
+4. Júlio Figueiredo
+5. Luiz Otávio Teles
