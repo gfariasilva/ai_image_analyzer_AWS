@@ -1,4 +1,4 @@
-# 🚀 README - Arquitetura AWS para Processamento de Imagens 🌄
+# Arquitetura AWS para Processamento de Imagens
 
 ## 🌐 Visão Geral
 Esta arquitetura AWS permite o **upload**, **processamento** e **análise** de imagens utilizando vários serviços da AWS. O sistema detecta automaticamente se uma imagem contém pessoas usando Amazon Rekognition e armazena os resultados.
@@ -51,16 +51,3 @@ Esta arquitetura AWS permite o **upload**, **processamento** e **análise** de i
 - 🛡️ Secrets Manager para credenciais
 - 🏠 Comunicação interna via VPC
 - 🚫 Acesso restrito ao RDS e funções Lambda que manipulam o DB
-
----
-
-✨ **Arquitetura serverless escalável para análise de imagens na AWS!** ✨
-
----
-
-**Integrantes:**
-1. Gabriel Faria e Silva
-2. Guilherme Canarini Kaneda 
-3. João Pedro Vetorazzo Arantes
-4. Júlio Figueiredo
-5. Luiz Otávio Teles
